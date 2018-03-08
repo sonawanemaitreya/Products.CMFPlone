@@ -1,27 +1,24 @@
 # -*- coding: utf-8 -*-
-import logging
-import sys
-from StringIO import StringIO
-
-import pkg_resources
-import transaction
-from zope.interface import implementer
-
 from AccessControl import ClassSecurityInfo
 from AccessControl.requestmethod import postonly
 from App.class_init import InitializeClass
 from App.config import getConfiguration
 from OFS.SimpleItem import SimpleItem
-from ZODB.POSException import ConflictError
-
+from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.utils import registerToolInterface
 from Products.CMFCore.utils import UniqueObject
-from Products.CMFCore.permissions import ManagePortal
-
 from Products.CMFPlone.factory import _DEFAULT_PROFILE
 from Products.CMFPlone.interfaces import IMigrationTool
 from Products.CMFPlone.PloneBaseTool import PloneBaseTool
+from six import StringIO
+from ZODB.POSException import ConflictError
+from zope.interface import implementer
+
+import logging
+import pkg_resources
+import sys
+import transaction
 
 logger = logging.getLogger('plone.app.upgrade')
 _upgradePaths = {}
@@ -188,7 +185,7 @@ class MigrationTool(PloneBaseTool, UniqueObject, SimpleItem):
         # Useful core information.
         vars = {}
         get_dist = pkg_resources.get_distribution
-        vars['Zope'] = get_dist('Zope2').version
+        vars['Zope'] = get_dist('Zope').version
         vars['Python'] = sys.version
         vars['Platform'] = sys.platform
         vars['Plone'] = get_dist('Products.CMFPlone').version

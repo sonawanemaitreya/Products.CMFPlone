@@ -5,7 +5,7 @@ from plone.app.testing import TEST_USER_PASSWORD
 from plone.app.testing.bbb import PloneTestCase
 from plone.keyring.interfaces import IKeyManager
 from plone.protect.authenticator import AuthenticatorView
-from StringIO import StringIO
+from six import StringIO
 from zope.component import queryUtility
 
 
@@ -65,7 +65,8 @@ class AuthenticatorTestCase(PloneTestCase):
     def test_MembershipTool_setPassword(self):
         self.checkAuthenticator(
             '/portal_membership/setPassword',
-            'password=y0d4Wg')
+            'password=y0d4Wg',
+            status=204)
 
     def test_MembershipTool_deleteMemberArea(self):
         self.checkAuthenticator(
@@ -80,7 +81,8 @@ class AuthenticatorTestCase(PloneTestCase):
     def test_userFolderAddUser(self):
         self.checkAuthenticator(
             '/acl_users/userFolderAddUser',
-            'login=foo&password=bar&domains=&roles:list=Manager')
+            'login=foo&password=bar&domains=&roles:list=Manager',
+            status=204)
 
     def test_userFolderEditUser(self):
         self.checkAuthenticator(
@@ -91,4 +93,5 @@ class AuthenticatorTestCase(PloneTestCase):
     def test_userFolderDelUsers(self):
         self.checkAuthenticator(
             '/acl_users/userFolderDelUsers',
-            'names:list=%s' % TEST_USER_ID)
+            'names:list=%s' % TEST_USER_ID,
+            status=204)

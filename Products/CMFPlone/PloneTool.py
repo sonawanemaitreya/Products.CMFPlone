@@ -40,8 +40,10 @@ from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import log
 from Products.CMFPlone.utils import log_exc
 from Products.CMFPlone.utils import safe_hasattr
+from Products.CMFPlone.utils import safe_unicode
 from Products.CMFPlone.utils import transaction_note
 from Products.statusmessages.interfaces import IStatusMessage
+from six.moves.urllib import parse
 from types import UnicodeType
 from ZODB.POSException import ConflictError
 from zope.component import getUtility
@@ -53,7 +55,6 @@ from zope.lifecycleevent import ObjectModifiedEvent
 import re
 import sys
 import transaction
-import urlparse
 
 
 _marker = utils._marker
@@ -263,7 +264,7 @@ class PloneTool(PloneBaseTool, UniqueObject, SimpleItem):
             parent = aq_parent(aq_inner(obj))
             parent.manage_renameObject(obj.getId(), id)
 
-    def _makeTransactionNote(self, obj, msg=''):
+    def _makeTransactionNote(self, obj, msg=u''):
         # TODO Why not aq_parent()?
         relative_path = '/'.join(
             getToolByName(self, 'portal_url').getRelativeContentPath(obj)[:-1]
@@ -271,13 +272,8 @@ class PloneTool(PloneBaseTool, UniqueObject, SimpleItem):
         if not msg:
             msg = relative_path + '/' + obj.title_or_id() \
                 + ' has been modified.'
-        if isinstance(msg, UnicodeType):
-            # Convert unicode to a regular string for the backend write IO.
-            # UTF-8 is the only reasonable choice, as using unicode means
-            # that Latin-1 is probably not enough.
-            msg = msg.encode('utf-8')
         if not transaction.get().description:
-            transaction_note(msg)
+            transaction_note(safe_unicode(msg))
 
     @security.public
     def contentEdit(self, obj, **kwargs):
@@ -415,14 +411,14 @@ class PloneTool(PloneBaseTool, UniqueObject, SimpleItem):
         Since Python 2.6: urlparse now returns a ParseResult object.
         We just need the tuple form which is tuple(result).
         """
-        return tuple(urlparse.urlparse(url))
+        return tuple(parse.urlparse(url))
 
     @security.public
     def urlunparse(self, url_tuple):
         """Puts a url back together again, in the manner that
         urlparse breaks it.
         """
-        return urlparse.urlunparse(url_tuple)
+        return parse.urlunparse(url_tuple)
 
     # Enable scripts to get the string value of an exception even if the
     # thrown exception is a string and not a subclass of Exception.
@@ -817,7 +813,6 @@ class PloneTool(PloneBaseTool, UniqueObject, SimpleItem):
         registry = getUtility(IRegistry)
         site_settings = registry.forInterface(
             ISiteSchema, prefix="plone", check=False)
-        use_all = site_settings.exposeDCMetaTags
 
         try:
             use_all = site_settings.exposeDCMetaTags

@@ -2,22 +2,17 @@
 #
 # Helper objects for the Plone test suite
 #
-
-# $Id$
-
-import os
-
-from zope.interface import implementer
-from zope.interface import implementer
-from zope.interface import Interface
-
+from ComputedAttribute import ComputedAttribute
+from OFS.Folder import Folder as SimpleFolder
+from OFS.SimpleItem import SimpleItem
 from Products.CMFPlone.interfaces import INonStructuralFolder
 from Products.CMFPlone.interfaces import IWorkflowChain
-
-from ComputedAttribute import ComputedAttribute
-from OFS.SimpleItem import SimpleItem
-from OFS.Folder import Folder as SimpleFolder
+from six import StringIO
+from zope.interface import implementer
+from zope.interface import Interface
 from ZPublisher.HTTPRequest import FileUpload
+
+import os
 
 
 TEXT = 'file data'
@@ -89,6 +84,7 @@ class File(FileUpload):
             self.data = data
         if headers is not None:
             self.headers = headers
+        self.file = StringIO(self.data)
 
     def seek(self, *args):
         pass

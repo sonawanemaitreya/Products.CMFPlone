@@ -17,16 +17,7 @@
     <meta:provides feature="plone-44" />
     <meta:provides feature="plone-5" />
     <meta:provides feature="plone-51" />
-
-    <!-- Exclude directives need to be executed before the ZCML file would
-         be loaded. Doing this during the meta.zcml phase ensures this.
-         The functionality in the following packages is not used and might
-         interfere with Plone's own. -->
-    <configure zcml:condition="installed Products.CMFDefault">
-        <exclude package="Products.CMFDefault.browser" file="configure.zcml" />
-        <exclude package="Products.CMFDefault.formlib" file="configure.zcml" />
-        <exclude package="Products.CMFDefault.upgrade" file="configure.zcml" />
-    </configure>
+    <meta:provides feature="plone-52" />
 
     <include package="Products.CMFCore" file="meta.zcml" />
     <include package="Products.GenericSetup" file="meta.zcml" />

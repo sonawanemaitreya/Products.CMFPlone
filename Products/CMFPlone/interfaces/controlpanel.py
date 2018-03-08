@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from basetool import IPloneBaseTool
 from plone.supermodel import model
 from Products.CMFPlone import PloneMessageFactory as _
+from Products.CMFPlone.interfaces.basetool import IPloneBaseTool
 from zope import schema
 from zope.interface import implementer
 from zope.interface import Interface
@@ -39,7 +39,7 @@ Disallow: /*folder_factories$
 Disallow: /*folder_summary_view$
 Disallow: /*login_form$
 Disallow: /*mail_password_form$
-Disallow: /*search
+Disallow: /@@search
 Disallow: /*search_rss$
 Disallow: /*sendto_form$
 Disallow: /*summary_view$
@@ -51,7 +51,7 @@ Disallow: /*view$
 def validate_json(value):
     try:
         json.loads(value)
-    except ValueError, exc:
+    except ValueError as exc:
         class JSONError(schema.ValidationError):
             __doc__ = _(u"Must be empty or a valid JSON-formatted "
                         u"configuration – ${message}.", mapping={
@@ -277,7 +277,7 @@ class ILanguageSchema(Interface):
                 default=u'Authenticated users only'),
         description=_(
             u'description_auth_ookie_manual_override',
-            default=(u'Related to Use cookie for manual override')
+            default=(u'Related to: use cookie for manual override')
         ),
         default=False,
         required=False,
@@ -355,75 +355,112 @@ class IFilterSchema(Interface):
     nasty_tags = schema.List(
         title=_(u'Nasty tags'),
         description=_(u'These tags and their content are completely blocked '
-                      'when a page is saved or rendered.'),
+                      'when a page is saved or rendered. They are only deleted'
+                      ' if they are not marked as valid_tags'),
         default=[u'style', u'object', u'embed', u'applet', u'script', u'meta'],
         value_type=schema.TextLine(),
         missing_value=[],
         required=False)
 
-    stripped_tags = schema.List(
-        title=_(u'Stripped tags'),
-        description=_(u'These tags are stripped when saving or rendering, '
-                      'but any content is preserved.'),
-        default=[u'font', ],
-        value_type=schema.TextLine(),
-        missing_value=[],
-        required=False)
-
-    custom_tags = schema.List(
-        title=_(u'Custom tags'),
-        description=_(u'Add tag names here for tags which are not part of '
-                      'XHTML but which should be permitted.'),
-        default=[],
-        value_type=schema.TextLine(),
-        missing_value=[],
-        required=False)
-
-    # class IFilterAttributesSchema(Interface):
-
-    stripped_attributes = schema.List(
-        title=_(u'Stripped attributes'),
-        description=_(u'These attributes are stripped from any tag when '
-                      'saving.'),
-        default=(u'dir lang valign halign border frame rules cellspacing '
-                 'cellpadding bgcolor').split(),
-        value_type=schema.TextLine(),
-        missing_value=[],
-        required=False)
-
-    stripped_combinations = schema.Dict(
-        title=_(u'Stripped combinations'),
-        description=_(u'These attributes are stripped from those tags when '
-                      'saving.'),
-        key_type=schema.TextLine(title=u'tags'),
-        value_type=schema.TextLine(title=u'attributes'),
-        default={'table th td': 'width height'},
-        missing_value={},
-        required=False)
-
-    # class IFilterEditorSchema(Interface):
-
-    style_whitelist = schema.List(
-        title=_(u'Permitted properties'),
-        description=_(
-            u'These CSS properties are allowed in style attributes.'),
+    valid_tags = schema.List(
+        title=_(u'Valid tags'),
+        description=_(u'A list of valid tags which will be not filtered out.'),
         default=[
-            u'text-align',
-            u'list-style-type',
-            u'float padding-left',
-            u'text-decoration'
+            u'a',
+            u'abbr',
+            u'acronym',
+            u'address',
+            u'article',
+            u'aside',
+            u'audio',
+            u'b',
+            u'bdo',
+            u'big',
+            u'blockquote',
+            u'body',
+            u'br',
+            u'canvas',
+            u'caption',
+            u'cite',
+            u'code',
+            u'col',
+            u'colgroup',
+            u'command',
+            u'datalist',
+            u'dd',
+            u'del',
+            u'details',
+            u'dfn',
+            u'dialog',
+            u'div',
+            u'dl',
+            u'dt',
+            u'em',
+            u'figure',
+            u'footer',
+            u'h1',
+            u'h2',
+            u'h3',
+            u'h4',
+            u'h5',
+            u'h6',
+            u'head',
+            u'header',
+            u'hgroup',
+            u'html',
+            u'i',
+            u'iframe',
+            u'img',
+            u'ins',
+            u'kbd',
+            u'keygen',
+            u'li',
+            u'map',
+            u'mark',
+            u'meter',
+            u'nav',
+            u'ol',
+            u'output',
+            u'p',
+            u'pre',
+            u'progress',
+            u'q',
+            u'rp',
+            u'rt',
+            u'ruby',
+            u'samp',
+            u'section',
+            u'small',
+            u'source',
+            u'span',
+            u'strong',
+            u'sub',
+            u'sup',
+            u'table',
+            u'tbody',
+            u'td',
+            u'tfoot',
+            u'th',
+            u'thead',
+            u'time',
+            u'title',
+            u'tr',
+            u'tt',
+            u'u',
+            u'ul',
+            u'var',
+            u'video',
         ],
         value_type=schema.TextLine(),
         missing_value=[],
         required=False)
 
-    class_blacklist = schema.List(
-        title=_(u'Filtered classes'),
-        description=_(u'These class names are not allowed in class '
-                      'attributes.'),
+    custom_attributes = schema.List(
+        title=_(u'Custom attributes'),
+        description=_(u'These attributes are additionally allowed.'),
         default=[],
-        missing_value=[],
         value_type=schema.TextLine(),
+        missing_value=[],
         required=False)
 
 
@@ -545,7 +582,7 @@ class ITinyMCELayoutSchema(Interface):
             u'Enter a JSON-formatted style format configuration. '
             u'A format is for example the style that get applied when '
             u'you press the bold button inside the editor. '
-            u'See http://www.tinymce.com/wiki.php/Configuration:formats'),
+            u'See https://www.tinymce.com/docs/configure/content-formatting/#formats'),  # NOQA: E501
         constraint=validate_json,
         default=json.dumps({
             'discreet': {'inline': 'span', 'classes': 'discreet'},
@@ -653,7 +690,7 @@ class ITinyMCEPluginSchema(Interface):
             'help_tinymce_templates',
             default=(
                 u'Enter the list of templates in json format '
-                u'http://www.tinymce.com/wiki.php/Plugin:template'
+                u'https://www.tinymce.com/docs/plugins/template/'
             )
         ),
         required=False,
@@ -688,6 +725,8 @@ class ITinyMCEPluginSchema(Interface):
         value_type=schema.TextLine(),
         missing_value=[],
         default=[])
+
+
 ITinyMCELibrariesSchema = ITinyMCEPluginSchema  # bw compat
 
 
@@ -869,7 +908,7 @@ class INavigationSchema(Interface):
         description=_(
             u'By default, any content item in the root of the portal will '
             u'appear as a tab. If you turn this option off, only folders '
-            u'will be shown. This only has an effect if \'Automatically '
+            u'will be shown. This only has an effect if \'automatically '
             u'generate tabs\' is enabled.'),
         default=True,
         required=False)
@@ -1024,7 +1063,7 @@ class ISearchSchema(Interface):
 
     sort_on = schema.Choice(
         title=_(u'label_sort_on', default=u'Sort on'),
-        description=_(u"Sort the default search on this index"),
+        description=_(u'Sort the default search on this index'),
         vocabulary=SimpleVocabulary([
             SimpleTerm(u'relevance', u'relevance', _(u'relevance')),
             SimpleTerm(u'Date', u'Date', _(u'date (newest first)')),
@@ -1173,6 +1212,66 @@ class ISiteSchema(Interface):
                        _(u'For authenticated users only'))]),
         required=True)
 
+    no_thumbs_portlet = schema.Bool(
+        title=_(u'No Thumbs in portlets'),
+        description=_(
+            u'Suppress thumbs in all portlets;'
+            u' this default can be overridden individually '
+            u'in selected portlets'),
+        default=False,
+        required=False)
+
+    no_thumbs_lists = schema.Bool(
+        title=_(u'No thumbs in list views'),
+        description=_(u'Suppress thumbs in all list views; '
+                      u'this default can be overriden individually'),
+        default=False,
+        required=False)
+
+    no_thumbs_summary = schema.Bool(
+        title=_(u'No thumbs in summary views'),
+        description=_(u'Suppress thumbs in all summary views; '
+                      u'this default can be overriden individually'),
+        default=False,
+        required=False)
+
+    no_thumbs_tables = schema.Bool(
+        title=_(u'No thumbs in table views'), description=_(
+            u'Suppress thumbs in all tableviews and in folder contents view; '
+            u'this default can be overriden individually'),
+        default=False,
+        required=False)
+
+    thumb_scale_portlet = schema.Choice(
+        title=_(u'Thumb scale for portlets'),
+        description=_(u'This default can be overriden individually.'),
+        default=u'icon',
+        vocabulary='plone.app.vocabularies.ImagesScales',
+        required=True)
+
+    thumb_scale_listing = schema.Choice(
+        title=_(u'Thumb scale for listings'),
+        description=_(u'E.g. standard view;'
+                      u' This default can be overriden individually.'),
+        default=u'thumb',
+        vocabulary='plone.app.vocabularies.ImagesScales',
+        required=True)
+
+    thumb_scale_table = schema.Choice(
+        title=_(u'Thumb scale for tables'),
+        description=_(u'E.g., tabular view, folder content listing;'
+                      u' This default can be overriden individually.'),
+        default=u'tile',
+        vocabulary='plone.app.vocabularies.ImagesScales',
+        required=True)
+
+    thumb_scale_summary = schema.Choice(
+        title=_(u'Thumb scale for summary view'),
+        description=_(u'This default can be overriden individually.'),
+        default=u'mini',
+        vocabulary='plone.app.vocabularies.ImagesScales',
+        required=True)
+
     toolbar_position = schema.Choice(
         title=_(u'Toolbar position'),
         description=_(
@@ -1209,17 +1308,16 @@ class ISiteSchema(Interface):
     default_page = schema.List(
         title=_(u'Default page IDs'),
         description=_(
-            u'Select which IDs (short names) can act as fallback default pages for',
-            u'a container.'
-        ),
+            u'Select which IDs (short names) can act as fallback '
+            u'default pages for a container.'),
         required=True,
-        default=[u'index_html',
-                 u'index.html',
-                 u'index.htm',
-                 u'FrontPage'],
+        default=[
+            u'index_html',
+            u'index.html',
+            u'index.htm',
+            u'FrontPage'],
         missing_value=[],
-        value_type=schema.TextLine()
-    )
+        value_type=schema.TextLine())
 
     roles_allowed_to_add_keywords = schema.List(
         title=_(u'Roles that can add keywords'),
@@ -1530,8 +1628,8 @@ class IImagingSchema(Interface):
         default=88
     )
 
-    retina_scales=schema.Choice(
-        title=_(u'Retina mode'),
+    highpixeldensity_scales = schema.Choice(
+        title=_(u'High pixel density mode'),
         description=_(u''),
         default='disabled',
         vocabulary=SimpleVocabulary([
@@ -1543,7 +1641,7 @@ class IImagingSchema(Interface):
 
     quality_2x = schema.Int(
         title=_(u'Image quality at 2x'),
-        description=_(u'A value for the quality of 2x retina images, from 1 '
+        description=_(u'A value for the quality of 2x high pixel density images, from 1 '
                       '(lowest) to 95 (highest). A value of 0 will mean '
                       'plone.scaling\'s default will be used, which is '
                       'currently 62.'),
@@ -1554,7 +1652,7 @@ class IImagingSchema(Interface):
 
     quality_3x = schema.Int(
         title=_(u'Image quality at 3x'),
-        description=_(u'A value for the quality of 3x retina images, from 1 '
+        description=_(u'A value for the quality of 3x high pixel density images, from 1 '
                       '(lowest) to 95 (highest). A value of 0 will mean '
                       'plone.scaling\'s default will be used, which is '
                       'currently 51.'),
@@ -1643,7 +1741,8 @@ class IActionSchema(Interface):
         title=_(u'action_url_heading', default=u'Action URL'),
         description=_(
             u'action_url_description',
-            default=u'An expression producing the called URL'
+            default=u'An expression producing the called URL. '
+            u'Example: string:${globals_view/navigationRootUrl}/page'
         ),
         required=True)
 

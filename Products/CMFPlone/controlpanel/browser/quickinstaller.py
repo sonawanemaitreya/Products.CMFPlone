@@ -302,16 +302,10 @@ class InstallerView(BrowserView):
             dist = pkg_resources.get_distribution(product_id)
             return dist.version
         except pkg_resources.DistributionNotFound:
-            return ''
-
-        # TODO: check if extra Products check is needed after all.
-        # if "." not in product_id:
-        #     try:
-        #         dist = pkg_resources.get_distribution(
-        #             "Products." + product_id)
-        #         return dist.version
-        #     except pkg_resources.DistributionNotFound:
-        #         pass
+            if '.' in product_id:
+                return ''
+        # For CMFPlacefulWorkflow we need to try Products.CMFPlacefulWorkflow.
+        return self.get_product_version('Products.' + product_id)
 
     def get_latest_upgrade_step(self, profile_id):
         """Get highest ordered upgrade step for profile.
@@ -548,7 +542,7 @@ class ManageProductsView(InstallerView):
             profile_type = pid_parts[-1]
             if product_id not in addons:
                 # get some basic information on the product
-                installed = self.is_profile_installed(pid)
+                installed = self.is_product_installed(product_id)
                 upgrade_info = {}
                 if installed:
                     upgrade_info = self.upgrade_info(product_id)
@@ -617,7 +611,7 @@ class ManageProductsView(InstallerView):
         if apply_filter == 'broken':
             all_broken = self.errors.values()
             for broken in all_broken:
-                filtered[broken['productname']] = broken
+                filtered[broken['product_id']] = broken
         else:
             for product_id, addon in addons.items():
                 if product_name and addon['id'] != product_name:

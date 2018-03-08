@@ -4,17 +4,16 @@
    comes with its own test fixture. Would be nice to refactor that to use the
    CMFPlone fixture at some point.
 """
-from cStringIO import StringIO
-from urllib import urlencode
+from plone.app import testing
+from plone.app.testing.bbb import PloneTestCase as FunctionalTestCase
+from plone.app.testing.bbb import PloneTestCaseFixture
 from plone.protect.authenticator import createToken
+from Products.CMFCore.utils import getToolByName
+from six import StringIO
+from six.moves.urllib.parse import urlencode
 
 import re
 import transaction
-
-from plone.app.testing.bbb import PloneTestCase as FunctionalTestCase
-from plone.app.testing.bbb import PloneTestCaseFixture
-from plone.app import testing
-from Products.CMFCore.utils import getToolByName
 
 
 class ControlPanelFixture(PloneTestCaseFixture):
@@ -98,7 +97,8 @@ class TestSiteAdministratorRoleFunctional(UserGroupsControlPanelTestCase):
     def testControlPanelOverview(self):
         # make sure we can view the Site Setup page,
         # at both old and new URLs
-        res = self.publish('/plone/@@overview-controlpanel', 'siteadmin:secret')
+        res = self.publish(
+            '/plone/plone_control_panel', 'siteadmin:secret')
         self.assertEqual(200, res.status)
         res = self.publish(
             '/plone/@@overview-controlpanel', 'siteadmin:secret'
@@ -315,9 +315,10 @@ class TestSiteAdministratorRoleFunctional(UserGroupsControlPanelTestCase):
         res = self.publish('/plone/@@usergroup-userprefs',
                            basic='siteadmin:secret')
         contents = self._simplify_white_space(res.getOutput())
-        self.assertTrue('<input type="checkbox" class="noborder notify" '
-                        'name="delete:list" value="root" disabled="disabled" />'
-                        in contents)
+        self.assertTrue(
+            '<input type="checkbox" class="noborder notify" '
+            'name="delete:list" value="root" disabled="disabled" />'
+            in contents)
 
         form = {
             '_authenticator': self.siteadmin_token,

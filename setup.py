@@ -1,7 +1,7 @@
 from setuptools import setup
 from setuptools import find_packages
 
-version = '5.1b4.dev0'
+version = '5.1rc2.dev0'
 
 setup(
     name='Products.CMFPlone',
@@ -14,7 +14,7 @@ setup(
         "Framework :: Plone",
         "Framework :: Plone :: 5.1",
         "Framework :: Zope2",
-        "License :: OSI Approved :: GNU General Public License (GPL)",
+        "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.7",
@@ -37,6 +37,7 @@ setup(
             'lxml',
             'mock',
             'plone.app.robotframework>0.9.16',
+            'robotframework-debuglibrary',
             'plone.app.testing',
             'zope.globalrequest',
             'zope.testing',
@@ -44,6 +45,7 @@ setup(
     ),
     install_requires=[
         'setuptools',
+        'AccessControl >= 4.0b1',
         'Acquisition',
         'DateTime',
         'ExtensionClass',
@@ -60,22 +62,23 @@ setup(
         'Products.ExternalEditor',
         'Products.GenericSetup >= 1.8.2',
         'Products.MimetypesRegistry',
-        'Products.PlacelessTranslationService',
         # 'Products.PloneLanguageTool',
         'Products.PlonePAS',
         'Products.PluggableAuthService',
         'Products.PluginRegistry',
         'Products.PortalTransforms',
         'Products.ResourceRegistries',
+        'Products.Sessions',
+        'Products.SiteErrorLog',
+        'Products.TemporaryFolder',
         'Products.contentmigration',
         'Products.statusmessages',
         'ZODB3',
-        'Zope2 > 2.13.0',
+        'Zope >= 4.0b2',
+        'ZServer',
         'borg.localrole',
-        'cssmin',
         'five.customerize',
         'five.localsitemanager',
-        'five.pt',
         'mockup',
         'plone.api >= 1.4.4',
         'plone.app.content',
@@ -121,6 +124,7 @@ setup(
         'plone.subrequest',
         'plone.theme',
         'plonetheme.barceloneta',
+        'pyScss',
         'slimit',
         'transaction',
         'z3c.autoinclude',
@@ -146,7 +150,6 @@ setup(
     ],
     entry_points="""\
       [console_scripts]
-      plone-generate-gruntfile = Products.CMFPlone._scripts.generate_gruntfile:main
       plone-compile-resources = Products.CMFPlone._scripts.compile_resources:main
       """
 )

@@ -3,7 +3,7 @@ from AccessControl import ClassSecurityInfo
 from AccessControl import getSecurityManager
 from AccessControl import ModuleSecurityInfo
 from AccessControl import Unauthorized
-from AccessControl.ZopeGuards import guarded_getattr
+from AccessControl.safe_formatter import SafeFormatter
 from Acquisition import aq_base
 from Acquisition import aq_get
 from Acquisition import aq_inner
@@ -12,12 +12,8 @@ from App.Common import package_home
 from App.Dialogs import MessageDialog
 from App.ImageFile import ImageFile
 from cgi import escape
-from collections import Mapping
 from DateTime import DateTime
 from DateTime.interfaces import DateTimeError
-from log import log
-from log import log_deprecated
-from log import log_exc
 from OFS.CopySupport import CopyError
 from os.path import abspath
 from os.path import join
@@ -30,8 +26,10 @@ from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone import PloneMessageFactory as _
 from Products.CMFPlone.interfaces.controlpanel import IImagingSchema
 from Products.CMFPlone.interfaces.siteroot import IPloneSiteRoot
-from types import ClassType
-from urlparse import urlparse
+from Products.CMFPlone.log import log
+from Products.CMFPlone.log import log_deprecated
+from Products.CMFPlone.log import log_exc
+from six.moves.urllib.parse import urlparse
 from webdav.interfaces import IWriteLock
 from zope import schema
 from zope.component import getMultiAdapter
@@ -50,11 +48,16 @@ import json
 import OFS
 import pkg_resources
 import re
-import string
 import sys
 import transaction
 import warnings
 import zope.interface
+
+
+try:
+    from types import ClassType
+except ImportError:
+    ClassType = type
 
 
 deprecated_import(
@@ -411,16 +414,10 @@ def getFSVersionTuple():
 def transaction_note(note):
     """Write human legible note"""
     T = transaction.get()
-    if isinstance(note, unicode):
-        # Convert unicode to a regular string for the backend write IO.
-        # UTF-8 is the only reasonable choice, as using unicode means
-        # that Latin-1 is probably not enough.
-        note = note.encode('utf-8', 'replace')
-
     if (len(T.description) + len(note)) >= 65533:
         log('Transaction note too large omitting %s' % str(note))
     else:
-        T.note(str(note))
+        T.note(safe_unicode(note))
 
 
 def base_hasattr(obj, name):
@@ -627,8 +624,9 @@ def set_own_login_name(member, loginname):
     name of another member too, though the name of this function is a
     bit weird then.  Historical accident.
     """
-    pas = getToolByName(member, 'acl_users')
-    mt = getToolByName(member, 'portal_membership')
+    portal = getSite()
+    pas = getToolByName(portal, 'acl_users')
+    mt = getToolByName(portal, 'portal_membership')
     if member.getId() == mt.getAuthenticatedMember().getId():
         pas.updateOwnLoginName(loginname)
         return
@@ -653,7 +651,7 @@ def validate_json(value):
         DeprecationWarning)
     try:
         json.loads(value)
-    except ValueError, exc:
+    except ValueError as exc:
         class JSONError(schema.ValidationError):
             __doc__ = _(u"Must be empty or a valid JSON-formatted "
                         u"configuration – ${message}.", mapping={
@@ -710,7 +708,13 @@ def getQuality():
 
 
 def getRetinaScales():
-    from plone.namedfile.utils import getRetinaScales as func
+    warnings.warn(
+        'use getHighPixelDensityScales instead',
+        DeprecationWarning)
+    return getHighPixelDensityScales()
+
+def getHighPixelDensityScales():
+    from plone.namedfile.utils import getHighPixelDensityScales as func
     return func()
 
 
@@ -767,10 +771,9 @@ def get_top_site_from_url(context, request):
     - No virtual hosting, URL path: /Plone/Subsite, Returns: Plone
     - Virtual hosting roots to Subsite, URL path: /, Returns: Subsite
     """
-    url_path = urlparse(context.absolute_url()).path.split('/')
-
     site = getSite()
     try:
+        url_path = urlparse(context.absolute_url()).path.split('/')
         for idx in range(len(url_path)):
             _path = '/'.join(url_path[:idx + 1]) or '/'
             site_path = request.physicalPathFromURL(_path)
@@ -786,70 +789,6 @@ def get_top_site_from_url(context, request):
         # Also, TestRequest doesn't have physicalPathFromURL
         pass
     return site
-
-
-class _MagicFormatMapping(Mapping):
-    """
-    Pulled from Jinja2
-
-    This class implements a dummy wrapper to fix a bug in the Python
-    standard library for string formatting.
-
-    See http://bugs.python.org/issue13598 for information about why
-    this is necessary.
-    """
-
-    def __init__(self, args, kwargs):
-        self._args = args
-        self._kwargs = kwargs
-        self._last_index = 0
-
-    def __getitem__(self, key):
-        if key == '':
-            idx = self._last_index
-            self._last_index += 1
-            try:
-                return self._args[idx]
-            except LookupError:
-                pass
-            key = str(idx)
-        return self._kwargs[key]
-
-    def __iter__(self):
-        return iter(self._kwargs)
-
-    def __len__(self):
-        return len(self._kwargs)
-
-
-class SafeFormatter(string.Formatter):
-
-    def __init__(self, value):
-        self.value = value
-        super(SafeFormatter, self).__init__()
-
-    def get_field(self, field_name, args, kwargs):
-        """
-        Here we're overridding so we can use guarded_getattr instead of
-        regular getattr
-        """
-        first, rest = field_name._formatter_field_name_split()
-
-        obj = self.get_value(first, args, kwargs)
-
-        # loop through the rest of the field_name, doing
-        #  getattr or getitem as needed
-        for is_attr, i in rest:
-            if is_attr:
-                obj = guarded_getattr(obj, i)
-            else:
-                obj = obj[i]
-
-        return obj, first
-
-    def safe_format(self, *args, **kwargs):
-        kwargs = _MagicFormatMapping(args, kwargs)
-        return self.vformat(self.value, args, kwargs)
 
 
 def _safe_format(inst, method):
