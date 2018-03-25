@@ -37,10 +37,10 @@
                                 tal:attributes="value action/id" />
                             <input tal:condition="action/visible"
                                 type="submit" class="standalone" name="hide"
-                                value="Hide" i18n:attributes="value" />
+                                value="Hide" i18n:attributes="" />
                             <input tal:condition="not:action/visible"
                                 type="submit" class="standalone" name="show"
-                                value="Show" i18n:attributes="value" />
+                                value="Show" i18n:attributes="" />
                             <input type="hidden" name="category"
                                 tal:attributes="value category/id" />
                             <a class="pat-plone-modal standalone"
@@ -49,7 +49,7 @@
                             <input type="submit" class="destructive" name="delete"
                                 value="Delete"
                                 confirm-message="Delete the action?"
-                                i18n:attributes="value; confirm-message"
+                                i18n:attributes="value confirm-message"
                                 onclick="return confirm(this.getAttribute('confirm-message'));"/>
                         </form>
                     </li>
